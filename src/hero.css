@@ -1,0 +1,143 @@
+/* Hero: первый кадр с паром → прокрутка запускает ролик → дым к түндүку → түндүк становится знаком NAKTA.
+   Всё, что крутится долго (пар, дым), анимирует только transform/opacity — работает на композиторе. */
+.hero {
+  --h-ink: #1c0d08;
+  --h-ease: cubic-bezier(.22, .61, .36, 1);
+  --h-ease-io: cubic-bezier(.45, .05, .35, 1);
+  position: relative; height: 100svh; min-height: 560px; overflow: hidden; isolation: isolate;
+  margin-top: calc(-1 * var(--header-h));               /* под sticky-шапку: видео на весь экран */
+  background: var(--h-ink) url(/hero/poster.webp) center / cover no-repeat; color: var(--on-dark);
+}
+.hero__video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+/* затемнение для текста и шапки; при старте ролика светлеет */
+.hero__shade {
+  position: absolute; inset: 0; pointer-events: none; transition: opacity 1.8s var(--h-ease);
+  background:
+    linear-gradient(to bottom, rgb(28 13 8 / .7), rgb(28 13 8 / 0) 42%),
+    radial-gradient(120% 90% at 50% 55%, rgb(28 13 8 / 0) 40%, rgb(28 13 8 / .8) 100%);
+}
+.hero.is-playing .hero__shade { opacity: .45; }
+
+/* ---------- пар над пиалой: живёт, пока ждём прокрутку ---------- */
+.hero__steam { position: absolute; left: 50%; top: var(--bowl-y, 50%); width: 0; height: 0; pointer-events: none; transition: opacity 1.6s var(--h-ease), transform 2.2s var(--h-ease); }
+.hero__steam i {
+  position: absolute; bottom: 0; left: calc(var(--x) * 1vmin);
+  width: calc(var(--w) * 1vmin); height: calc(var(--w) * 2.2vmin); border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(255 244 232 / .3), rgb(255 244 232 / .12) 45%, rgb(255 244 232 / 0));
+  transform-origin: 50% 100%; opacity: 0; will-change: transform, opacity;
+  animation: hero-wisp var(--d) var(--h-ease-io) var(--delay) infinite;
+}
+@keyframes hero-wisp {
+  0%   { transform: translate3d(-50%, 0, 0) scale(.45, .5); opacity: 0; }
+  22%  { opacity: var(--o); }
+  60%  { transform: translate3d(calc(-50% + var(--dx) * .5vmin), -26vmin, 0) rotate(var(--r)) scale(.95, 1.35); opacity: calc(var(--o) * .65); }
+  100% { transform: translate3d(calc(-50% + var(--dx) * 1vmin), -54vmin, 0) rotate(calc(var(--r) * -1)) scale(1.5, 2.1); opacity: 0; }
+}
+.hero.is-playing .hero__steam { opacity: 0; transform: translate3d(0, -10vmin, 0) scale(1.35); }   /* ролик пошёл: пар поднимается и тает */
+
+/* ---------- вступительный текст до прокрутки ---------- */
+.hero__intro {
+  position: absolute; left: 0; right: 0; top: 50%; translate: 0 -50%; padding-inline: var(--gutter);
+  text-align: center; pointer-events: none; text-shadow: 0 2px 36px rgb(0 0 0 / .6);
+  transition: opacity .9s var(--h-ease), transform 1.1s var(--h-ease), filter .9s var(--h-ease);
+}
+.hero__over { margin: 0 0 1.1rem; font-size: clamp(.8rem, 1.4vmin, .95rem); letter-spacing: .28em; text-transform: uppercase; color: var(--gold-hi); opacity: 0; animation: hero-fade 1.6s var(--h-ease) .2s forwards; }
+.hero__title { margin: 0; font-size: clamp(2.6rem, 8.4vmin, 6.4rem); line-height: 1.02; letter-spacing: -.015em; color: var(--on-dark); }
+.hero__line { display: block; overflow: hidden; padding-bottom: .08em; }
+/* каждая фраза: поднимается из-под маски, держится, уходит вверх; потом всплывает следующая */
+.hero__line > span { --cycle: 4.8s; display: block; animation: hero-cycle var(--cycle) var(--h-ease-io) calc(.3s + var(--n) * .14s) both; }
+@keyframes hero-cycle {
+  0%   { transform: translate3d(0, 105%, 0); opacity: 1; }
+  18%  { transform: none; }
+  82%  { transform: none; opacity: 1; }
+  100% { transform: translate3d(0, -70%, 0); opacity: 0; }
+}
+@keyframes hero-fade { to { opacity: 1; } }
+.hero.is-go .hero__intro { opacity: 0; transform: translate3d(0, -4vh, 0); filter: blur(6px); }
+
+/* ---------- дым к түндүку: прячет искажения купола на подъёме камеры ---------- */
+.hero__haze {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 1.1s var(--h-ease);
+  background:
+    radial-gradient(70% 55% at 50% 38%, rgb(205 180 150 / .16), rgb(205 180 150 / 0) 70%),
+    linear-gradient(to bottom, rgb(28 13 8 / .62), rgb(28 13 8 / .38) 55%, rgb(28 13 8 / .58));
+}
+.hero.is-haze .hero__haze { opacity: 1; transition-duration: .7s; }
+.hero__haze i {
+  position: absolute; left: var(--x); top: 100%; width: calc(var(--s) * 1vmin); height: calc(var(--s) * 1.3vmin); border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(226 205 178 / .34), rgb(226 205 178 / .12) 50%, rgb(226 205 178 / 0));
+  transform: translate3d(-50%, 0, 0) scale(.6); opacity: 0; will-change: transform, opacity;
+}
+.hero.is-haze .hero__haze i { animation: hero-smoke 2.4s var(--h-ease-io) var(--delay) forwards; }
+@keyframes hero-smoke {
+  0%   { transform: translate3d(-50%, 0, 0) scale(.6); opacity: 0; }
+  30%  { opacity: 1; }
+  100% { transform: translate3d(calc(-50% + var(--dx) * 1vmin), -150vh, 0) scale(1.6); opacity: .2; }
+}
+
+/* ---------- финал: түндүк становится знаком ---------- */
+.hero__veil {
+  position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity .6s var(--h-ease);
+  background: radial-gradient(circle at 50% var(--logo-y, 33%), rgb(28 13 8 / .92) 0, rgb(28 13 8 / .78) 16vmin, rgb(28 13 8 / .35) 42vmin, rgb(28 13 8 / .15) 70vmin);
+}
+.hero.is-ending .hero__veil { opacity: 1; transition-duration: 2s; }
+
+.hero__brand { position: absolute; left: 50%; top: var(--logo-y, 33%); width: min(88vw, 560px); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; text-align: center; pointer-events: none; z-index: 1; }
+.hero__emblem { --s: clamp(140px, 26vmin, 260px); display: block; width: var(--s); margin-top: calc(var(--s) * -.454); color: var(--gold-hi); }  /* центр знака = центр түндүка */
+.hero__emblem svg, .hero__word svg { display: block; width: 100%; height: auto; overflow: visible; }
+.hero__emblem path { fill: currentColor; fill-opacity: 0; stroke: currentColor; stroke-width: 2.4; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset .6s, fill-opacity .6s; }
+/* контур рисуется, заливается золотом, линия контура гаснет */
+.hero.is-ending .hero__emblem path {
+  stroke-dashoffset: 0; fill-opacity: 1; stroke-width: 0;
+  transition: stroke-dashoffset 1.9s var(--h-ease-io) calc(.3s + var(--i) * .09s), fill-opacity 1.1s var(--h-ease) calc(1.5s + var(--i) * .09s), stroke-width .9s var(--h-ease) calc(1.9s + var(--i) * .09s);
+}
+.hero__word { display: block; width: clamp(140px, 24vmin, 250px); margin-top: clamp(14px, 2.4vmin, 22px); color: var(--gold-hi); opacity: 0; transform: translate3d(0, 10px, 0); filter: blur(4px); transition: opacity .5s, transform .5s, filter .5s; }
+.hero.is-ending .hero__word { opacity: 1; transform: none; filter: none; transition: opacity 1.4s var(--h-ease) 1.7s, transform 1.4s var(--h-ease) 1.7s, filter 1.4s var(--h-ease) 1.7s; }
+.hero__slogan { margin: clamp(18px, 3vmin, 28px) 0 0; font-size: clamp(1.7rem, 4.4vmin, 2.9rem); line-height: 1.12; color: var(--on-dark); text-wrap: balance; clip-path: inset(0 0 100% 0); transform: translate3d(0, 14px, 0); transition: clip-path .5s, transform .5s; }
+.hero.is-ending .hero__slogan { clip-path: inset(0 0 -10% 0); transform: none; transition: clip-path 1.3s var(--h-ease) 2.3s, transform 1.3s var(--h-ease) 2.3s; }
+.hero__sub { margin: .7rem 0 0; font-size: clamp(.78rem, 1.7vmin, .95rem); letter-spacing: .14em; text-transform: uppercase; color: var(--on-dark-muted); opacity: 0; transition: opacity .5s; }
+.hero.is-ending .hero__sub { opacity: 1; transition: opacity 1.2s var(--h-ease) 2.8s; }
+.hero__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: .75rem; margin-top: clamp(20px, 3.4vmin, 32px); opacity: 0; transform: translate3d(0, 10px, 0); transition: opacity .5s, transform .5s; }
+.hero.is-ending .hero__cta { opacity: 1; transform: none; pointer-events: auto; transition: opacity 1.2s var(--h-ease) 3.1s, transform 1.2s var(--h-ease) 3.1s; }
+
+/* ---------- перемотка к финалу: одна иконка ---------- */
+.hero__skip {
+  position: absolute; right: var(--gutter); bottom: calc(max(16px, env(safe-area-inset-bottom)) + var(--tab-h, 0px)); z-index: 2;
+  width: 40px; height: 40px; display: grid; place-items: center; border: 0; border-radius: 50%; cursor: pointer;
+  color: var(--on-dark); background: rgb(255 255 255 / .06); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .12);
+  opacity: 0; pointer-events: none; transition: opacity .8s var(--h-ease), background .3s;
+}
+.hero__skip:hover { background: rgb(255 255 255 / .14); }
+.hero.is-go:not(.is-ending) .hero__skip { opacity: .7; pointer-events: auto; }
+.hero.is-go:not(.is-ending) .hero__skip:hover { opacity: 1; }
+
+/* reduced motion / экономия трафика / видео недоступно: финальная композиция на последнем кадре */
+.hero.is-static { background-image: url(/hero/end.webp); }
+.hero.is-static .hero__steam, .hero.is-static .hero__video, .hero.is-static .hero__intro { display: none; }
+.hero.is-static, .hero.is-static * { transition: none !important; }
+
+/* ---------- шапка и таб-бар поверх hero: едва заметное стекло на всю ширину;
+   как только hero ушёл — обычный вид из styles.css ---------- */
+html[data-hero] .header { transition: background-color .6s var(--ease), border-color .6s, opacity .9s var(--ease), transform .9s var(--ease), -webkit-backdrop-filter .6s, backdrop-filter .6s; }
+html[data-hero='hidden'] .header { opacity: 0; transform: translate3d(0, -10px, 0); pointer-events: none; }
+html[data-hero='hidden'] .header, html[data-hero='glass'] .header {
+  background: rgb(20 10 6 / .12); border-bottom-color: rgb(255 255 255 / .07);
+  -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
+}
+html[data-hero='hidden'] .header .brand, html[data-hero='glass'] .header .brand,
+html[data-hero='hidden'] .nav a, html[data-hero='glass'] .nav a { color: rgb(243 233 218 / .88); }
+html[data-hero='hidden'] .header .brand__emblem, html[data-hero='glass'] .header .brand__emblem { color: var(--gold-hi); }
+html[data-hero='glass'] .nav a::after { background: var(--gold-hi); }
+html[data-hero='hidden'] .header__cta, html[data-hero='glass'] .header__cta {
+  background: rgb(255 255 255 / .06); color: var(--on-dark); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .16);
+}
+html[data-hero='glass'] .header__cta:hover { background: var(--burgundy); box-shadow: none; }
+@media (max-width: 720px) {
+  .hero { --tab-h: 64px; }
+  html[data-hero='hidden'] .tabbar, html[data-hero='glass'] .tabbar {
+    background: rgb(20 10 6 / .14); -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / .07);
+  }
+  html[data-hero] .tabbar { transition: background-color .6s var(--ease), box-shadow .6s; }
+}
